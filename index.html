@@ -1159,7 +1159,7 @@ function closeModal() {
 document.addEventListener('keydown', e => {
   if (_modalOpen && (e.key === 'Escape' || e.key === 'Enter')) e.preventDefault();
 });
-// overlay click listener deferred — element lives after </script>
+// overlay click listener deferred — modal element is injected after the script tag
 window.addEventListener('load', () => {
   document.getElementById('modal-overlay').addEventListener('click', e => e.stopPropagation());
 });
