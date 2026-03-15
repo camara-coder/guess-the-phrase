@@ -393,8 +393,33 @@
     .btn-mod:hover { opacity: .82; transform: scale(1.03); }
     .btn-guess  { background: linear-gradient(135deg,#4488ff,#2255cc); color: #fff; }
     .btn-solve  { background: linear-gradient(135deg,#44aa66,#228844); color: #fff; }
-    .btn-wrong  { background: linear-gradient(135deg,#cc3333,#aa2222); color: #fff; }
+    .btn-wrong  { background: linear-gradient(135deg,#cc3333,#aa2222); color: #fff; position: relative; overflow: hidden; }
     .btn-nxt    { background: linear-gradient(135deg,#886633,#664422); color: #fff; }
+
+    /* WRONG GUESS two-stage confirmation */
+    .btn-wrong.armed {
+      background: linear-gradient(135deg,#ff8800,#cc5500);
+      animation: wrong-arm-pulse .45s ease-in-out infinite alternate;
+      transform: scale(1.06);
+      letter-spacing: 3px;
+    }
+    .btn-wrong.armed::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 3px;
+      background: rgba(255,255,255,.9);
+      border-radius: 0 0 7px 7px;
+      animation: wrong-countdown 3s linear forwards;
+    }
+    @keyframes wrong-arm-pulse {
+      from { box-shadow: 0 0 10px rgba(255,136,0,.5); }
+      to   { box-shadow: 0 0 24px rgba(255,136,0,1), 0 0 48px rgba(255,80,0,.5); }
+    }
+    @keyframes wrong-countdown {
+      from { width: 100%; }
+      to   { width: 0%; }
+    }
 
     /* ── OVERLAYS ─────────────────────────────────── */
     #flash-overlay {
@@ -665,7 +690,7 @@
 
       <div class="sep"></div>
 
-      <button class="btn-mod btn-wrong" onclick="wrongAction()">WRONG GUESS</button>
+      <button id="wrong-btn" class="btn-mod btn-wrong" onclick="wrongAction()">WRONG GUESS</button>
       <button class="btn-mod btn-nxt"   onclick="nextAction()">NEXT PLAYER</button>
     </div>
   </div>
@@ -1078,8 +1103,51 @@ function solveAction() {
   }
 }
 
-function wrongAction() { if(!G.roundOver) wrongGuess(false,true); }
-function nextAction()  { if(!G.roundOver) advanceTurn(); }
+// Two-stage confirmation for WRONG GUESS
+let _wrongArmed = false;
+let _wrongTimer  = null;
+let _wrongTicker = null;
+
+function wrongAction() {
+  if (G.roundOver) return;
+  const btn = document.getElementById('wrong-btn');
+
+  if (_wrongArmed) {
+    // Second click — confirmed
+    disarmWrongBtn();
+    wrongGuess(false, true);
+  } else {
+    // First click — arm with 3-second countdown
+    _wrongArmed = true;
+    btn.textContent = 'CONFIRM WRONG?';
+    btn.classList.add('armed');
+
+    let secs = 3;
+    _wrongTicker = setInterval(() => {
+      secs--;
+      if (secs > 0) {
+        btn.textContent = `CONFIRM WRONG? (${secs})`;
+      }
+    }, 1000);
+
+    _wrongTimer = setTimeout(() => {
+      disarmWrongBtn();
+    }, 3000);
+  }
+}
+
+function disarmWrongBtn() {
+  _wrongArmed = false;
+  clearTimeout(_wrongTimer);  _wrongTimer  = null;
+  clearInterval(_wrongTicker); _wrongTicker = null;
+  const btn = document.getElementById('wrong-btn');
+  if (btn) {
+    btn.textContent = 'WRONG GUESS';
+    btn.classList.remove('armed');
+  }
+}
+
+function nextAction() { if(!G.roundOver) { disarmWrongBtn(); advanceTurn(); } }
 
 function wrongGuess(isSolve=false, isManual=false) {
   playBuzzer();
@@ -1110,6 +1178,7 @@ function wrongGuess(isSolve=false, isManual=false) {
 }
 
 function advanceTurn() {
+  disarmWrongBtn();
   G.curP=(G.curP+1)%G.players.length;
   updateActive();
   document.getElementById('letter-inp').focus();
@@ -1121,6 +1190,7 @@ function checkComplete() {
 
 function solveWin(auto=false) {
   G.roundOver=true;
+  disarmWrongBtn();
 
   // Reveal any remaining tiles
   G.tiles.forEach((t,i)=>{
