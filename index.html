@@ -393,8 +393,110 @@
     .btn-mod:hover { opacity: .82; transform: scale(1.03); }
     .btn-guess  { background: linear-gradient(135deg,#4488ff,#2255cc); color: #fff; }
     .btn-solve  { background: linear-gradient(135deg,#44aa66,#228844); color: #fff; }
-    .btn-wrong  { background: linear-gradient(135deg,#cc3333,#aa2222); color: #fff; }
+    .btn-wrong  { background: linear-gradient(135deg,#cc3333,#aa2222); color: #fff; position: relative; overflow: hidden; }
     .btn-nxt    { background: linear-gradient(135deg,#886633,#664422); color: #fff; }
+
+    /* ── VALIDATION MODAL ──────────────────────────────── */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.72);
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    #modal-card {
+      background: linear-gradient(160deg,#161630,#0e0e24);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 36px 40px 32px;
+      min-width: 360px; max-width: 480px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06);
+      text-align: center;
+    }
+    #modal-icon {
+      font-size: 2.6rem;
+      margin-bottom: 10px;
+      line-height: 1;
+    }
+    #modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.55rem;
+      letter-spacing: 3px;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+    #modal-body {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: rgba(255,255,255,.75);
+      line-height: 1.55;
+      margin-bottom: 26px;
+    }
+    #modal-body .attempt-text {
+      display: block;
+      margin: 10px 0 4px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.25rem;
+      letter-spacing: 2px;
+      color: #fff;
+      background: rgba(255,255,255,.07);
+      border-radius: 8px;
+      padding: 8px 14px;
+    }
+    #modal-body .mod-only-tag {
+      display: inline-block;
+      font-size: .7rem;
+      letter-spacing: 3px;
+      color: #ff8800;
+      border: 1px solid #ff880055;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-bottom: 8px;
+    }
+    #modal-body .phrase-reveal {
+      display: block;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 2px;
+      color: #ffcc00;
+      background: rgba(255,204,0,.08);
+      border: 1px solid rgba(255,204,0,.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 4px;
+    }
+    #modal-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .modal-btn {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 22px;
+      cursor: pointer;
+      transition: transform .15s, opacity .15s;
+      min-width: 120px;
+    }
+    .modal-btn:hover { opacity: .85; transform: scale(1.04); }
+    .modal-btn-back {
+      background: rgba(255,255,255,.1);
+      color: rgba(255,255,255,.8);
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .modal-btn-danger {
+      background: linear-gradient(135deg,#cc2222,#991111);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(200,30,30,.45);
+    }
+    .modal-btn-warning {
+      background: linear-gradient(135deg,#cc7700,#994400);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(200,120,0,.45);
+    }
 
     /* ── OVERLAYS ─────────────────────────────────── */
     #flash-overlay {
@@ -663,10 +765,7 @@
         <button class="btn-mod btn-solve" onclick="solveAction()">SOLVE PUZZLE</button>
       </div>
 
-      <div class="sep"></div>
-
-      <button class="btn-mod btn-wrong" onclick="wrongAction()">WRONG GUESS</button>
-      <button class="btn-mod btn-nxt"   onclick="nextAction()">NEXT PLAYER</button>
+      <button class="btn-mod btn-nxt" onclick="nextAction()">NEXT PLAYER</button>
     </div>
   </div>
 </div>
@@ -1021,90 +1120,172 @@ function animScore(i,from,to) {
   gsap.to(obj,{v:to,duration:.8,ease:'power2.out',onUpdate:()=>{el.textContent=Math.round(obj.v);}});
 }
 
+// ── MODAL SYSTEM ────────────────────────────────────────
+let _modalOpen = false;
+
+function openModal(opts) {
+  // opts: { icon, title, body, cancelLabel, confirmLabel, confirmClass, onConfirm, onCancel }
+  _modalOpen = true;
+  document.getElementById('modal-icon').textContent   = opts.icon  || '';
+  document.getElementById('modal-title').textContent  = opts.title || '';
+  document.getElementById('modal-body').innerHTML     = opts.body  || '';
+
+  const confirm = document.getElementById('modal-confirm');
+  confirm.textContent = opts.confirmLabel || 'CONFIRM';
+  confirm.className   = 'modal-btn ' + (opts.confirmClass || 'modal-btn-danger');
+  confirm.onclick = () => { closeModal(); opts.onConfirm && opts.onConfirm(); };
+
+  const cancel = document.getElementById('modal-cancel');
+  cancel.textContent = opts.cancelLabel || 'GO BACK';
+  cancel.onclick = () => { closeModal(); opts.onCancel && opts.onCancel(); };
+
+  const overlay = document.getElementById('modal-overlay');
+  overlay.style.display = 'flex';
+  gsap.fromTo('#modal-card',
+    { opacity:0, scale:.82, y:28 },
+    { opacity:1, scale:1,   y:0, duration:.32, ease:'back.out(1.7)' }
+  );
+}
+
+function closeModal() {
+  _modalOpen = false;
+  gsap.to('#modal-card',{
+    opacity:0, scale:.88, y:16, duration:.18, ease:'power2.in',
+    onComplete:()=>{ document.getElementById('modal-overlay').style.display='none'; }
+  });
+}
+
+// Block Escape + click-outside from dismissing the modal
+document.addEventListener('keydown', e => {
+  if (_modalOpen && (e.key === 'Escape' || e.key === 'Enter')) e.preventDefault();
+});
+// overlay click listener deferred — element lives after </script>
+window.addEventListener('load', () => {
+  document.getElementById('modal-overlay').addEventListener('click', e => e.stopPropagation());
+});
+
 // ── ACTIONS ─────────────────────────────────────────────
 function guessAction() {
-  if(G.roundOver) return;
-  const inp=document.getElementById('letter-inp');
-  const ch=inp.value.trim().toUpperCase(); inp.value='';
+  if (G.roundOver) return;
+  const inp = document.getElementById('letter-inp');
+  const ch  = inp.value.trim().toUpperCase();
+  inp.value = '';
 
-  if(!ch || !/^[A-Z]$/.test(ch)) { inp.focus(); return; }
+  if (!ch || !/^[A-Z]$/.test(ch)) { inp.focus(); return; }
 
-  if(G.revealed.has(ch)) {
-    popup('ALREADY REVEALED!','#aaaaff',1100); inp.focus(); return;
+  // Already-revealed: gentle warning, no penalty
+  if (G.revealed.has(ch) || G.tiles.some(t => t.char === ch && t.isRev)) {
+    popup('ALREADY REVEALED — NO PENALTY', '#aaaaff', 1400);
+    inp.focus();
+    return;
   }
 
   playClick();
 
-  const matches=G.tiles.filter(t=>t.isLetter&&t.char===ch&&!t.isRev);
+  const matches = G.tiles.filter(t => t.isLetter && t.char === ch && !t.isRev);
 
-  if(matches.length===0) {
-    // Check if letter exists at all
-    const exists=G.tiles.some(t=>t.char===ch);
-    if(exists) { popup('ALREADY REVEALED!','#aaaaff',1100); inp.focus(); return; }
-    wrongGuess(false); return;
+  if (matches.length === 0) {
+    // Letter genuinely not in phrase — show danger modal before any penalty
+    openModal({
+      icon: '⚠️',
+      title: 'LETTER NOT IN PHRASE',
+      body: `The letter <span class="attempt-text">${ch}</span>
+             does not appear in the puzzle.<br>
+             Confirm the wrong-guess penalty?`,
+      cancelLabel:  'GO BACK',
+      confirmLabel: 'CONFIRM PENALTY',
+      confirmClass: 'modal-btn-danger',
+      onCancel:  () => { document.getElementById('letter-inp').focus(); },
+      onConfirm: () => applyWrongGuess(false),
+    });
+    return;
   }
 
+  // Correct letter — auto-reveal, no human decision needed
   G.revealed.add(ch);
-  matches.forEach((t,idx)=>{
-    t.isRev=true;
-    setTimeout(()=>{ t.inner.classList.add('flipped'); playDing(0,880+idx*35); },idx*115);
+  matches.forEach((t, idx) => {
+    t.isRev = true;
+    setTimeout(() => { t.inner.classList.add('flipped'); playDing(0, 880 + idx * 35); }, idx * 115);
   });
 
-  const pts = matches.length*PTS;
+  const pts = matches.length * PTS;
   const old = G.players[G.curP].roundScore;
   G.players[G.curP].roundScore += pts;
 
-  setTimeout(()=>{
-    animScore(G.curP,old,G.players[G.curP].roundScore);
-    popup(`+${pts} PTS!`,'#ffd700',1400);
-  }, matches.length*115+180);
+  setTimeout(() => {
+    animScore(G.curP, old, G.players[G.curP].roundScore);
+    popup(`+${pts} PTS!`, '#ffd700', 1400);
+  }, matches.length * 115 + 180);
 
-  setTimeout(()=>checkComplete(), matches.length*115+550);
+  setTimeout(() => checkComplete(), matches.length * 115 + 550);
   inp.focus();
 }
 
 function solveAction() {
-  if(G.roundOver) return;
-  const inp=document.getElementById('solve-inp');
-  const attempt=inp.value.trim(); if(!attempt) return;
+  if (G.roundOver) return;
+  const inp     = document.getElementById('solve-inp');
+  const attempt = inp.value.trim();
+  if (!attempt) return;
 
-  if(!confirm(`Solve attempt:\n"${attempt}"\n\nConfirm?`)) { inp.focus(); return; }
-  inp.value='';
-
-  if(attempt.toUpperCase()===G.phrase) {
-    solveWin(false);
-  } else {
-    wrongGuess(true);
-  }
+  // Gate 1 — did you type it right?
+  openModal({
+    icon: '🔍',
+    title: 'CONFIRM SOLVE ATTEMPT',
+    body: `Is this what the player said?<span class="attempt-text">${attempt}</span>`,
+    cancelLabel:  'NO, GO BACK',
+    confirmLabel: 'YES, SUBMIT',
+    confirmClass: 'modal-btn-warning',
+    onCancel: () => { document.getElementById('solve-inp').focus(); },
+    onConfirm: () => {
+      inp.value = '';
+      if (attempt.toUpperCase() === G.phrase) {
+        solveWin(false);
+      } else {
+        // Gate 2 — wrong solve: show real phrase (moderator only) before penalising
+        openModal({
+          icon: '🚨',
+          title: 'WRONG SOLVE',
+          body: `<span class="mod-only-tag">MODERATOR ONLY</span>
+                 The correct phrase is:<span class="phrase-reveal">${G.phrase}</span>
+                 <br>Confirm penalty? This player loses all round points.`,
+          cancelLabel:  'GO BACK — LET THEM RETRY',
+          confirmLabel: 'CONFIRM PENALTY',
+          confirmClass: 'modal-btn-danger',
+          onCancel: () => {
+            inp.value = attempt;
+            document.getElementById('solve-inp').focus();
+          },
+          onConfirm: () => applyWrongGuess(true),
+        });
+      }
+    },
+  });
 }
 
-function wrongAction() { if(!G.roundOver) wrongGuess(false,true); }
-function nextAction()  { if(!G.roundOver) advanceTurn(); }
+function nextAction() { if (!G.roundOver) advanceTurn(); }
 
-function wrongGuess(isSolve=false, isManual=false) {
+function applyWrongGuess(isSolve) {
   playBuzzer();
 
-  if(isSolve) {
-    const old=G.players[G.curP].roundScore;
-    G.players[G.curP].roundScore=0;
-    if(old>0) animScore(G.curP,old,0);
-    popup('WRONG SOLVE!\nTURN LOST','#ff4444',1800);
-  } else if(isManual) {
-    popup('WRONG!','#ff4444',1100);
+  if (isSolve) {
+    const old = G.players[G.curP].roundScore;
+    G.players[G.curP].roundScore = 0;
+    if (old > 0) animScore(G.curP, old, 0);
+    popup('WRONG SOLVE — TURN LOST', '#ff4444', 1800);
   } else {
-    popup('NOT IN PUZZLE!','#ff4444',1400);
+    popup('NOT IN PUZZLE!', '#ff4444', 1400);
   }
 
   // Red flash
-  gsap.to('#flash-overlay',{
-    backgroundColor:'rgba(255,0,0,.28)', duration:.09,
-    yoyo:true, repeat:5,
-    onComplete:()=>{ document.getElementById('flash-overlay').style.backgroundColor='rgba(255,0,0,0)'; }
+  gsap.to('#flash-overlay', {
+    backgroundColor: 'rgba(255,0,0,.28)', duration: .09,
+    yoyo: true, repeat: 5,
+    onComplete: () => { document.getElementById('flash-overlay').style.backgroundColor = 'rgba(255,0,0,0)'; }
   });
 
-  // Shake active card
-  const card=document.getElementById(`pc-${G.curP}`);
-  if(card) gsap.fromTo(card,{x:-9},{x:9,duration:.055,repeat:7,yoyo:true,ease:'none',onComplete:()=>gsap.set(card,{x:0})});
+  // Shake active player card
+  const card = document.getElementById(`pc-${G.curP}`);
+  if (card) gsap.fromTo(card, { x:-9 }, { x:9, duration:.055, repeat:7, yoyo:true, ease:'none', onComplete:()=>gsap.set(card,{x:0}) });
 
   setTimeout(advanceTurn, 820);
 }
@@ -1351,5 +1532,21 @@ G.players=[
 renderSlots();
 window.addEventListener('load',()=>setTimeout(animTitle,120));
 </script>
+
+<!-- ══════════════════════════════════════
+     VALIDATION MODAL (always in DOM)
+══════════════════════════════════════ -->
+<div id="modal-overlay">
+  <div id="modal-card">
+    <div id="modal-icon"></div>
+    <div id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div id="modal-btns">
+      <button id="modal-cancel"  class="modal-btn modal-btn-back"></button>
+      <button id="modal-confirm" class="modal-btn modal-btn-danger"></button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
