@@ -446,6 +446,75 @@
       animation: pts-pulse 1.5s ease-in-out infinite; white-space: nowrap;
     }
     @keyframes pts-pulse { 0%,100%{box-shadow:0 0 16px rgba(255,215,0,.3)} 50%{box-shadow:0 0 32px rgba(255,215,0,.7)} }
+    /* ── Result Stage (fills wheel area after spin) ── */
+    .ls-result-stage {
+      display: none; flex: 1; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 20px 20px 12px; gap: 20px; min-height: 0;
+    }
+    .ls-result-stage.active { display: flex; }
+    .ls-result-cards-row {
+      display: flex; gap: 22px; width: 100%; flex: 1; min-height: 0;
+      align-items: stretch;
+    }
+    .ls-result-card {
+      flex: 1; border-radius: 22px; padding: 28px 22px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; text-align: center; position: relative;
+      overflow: hidden; cursor: default;
+    }
+    .ls-result-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.06), transparent 65%);
+      pointer-events: none;
+    }
+    .ls-result-card[data-w="0"] {
+      background: linear-gradient(160deg, rgba(15,26,58,.97), rgba(7,7,26,.97));
+      border: 2px solid rgba(68,136,255,.65);
+      box-shadow: 0 0 70px rgba(68,136,255,.2), inset 0 0 40px rgba(68,136,255,.07);
+    }
+    .ls-result-card[data-w="1"] {
+      background: linear-gradient(160deg, rgba(32,15,58,.97), rgba(7,7,26,.97));
+      border: 2px solid rgba(187,119,255,.65);
+      box-shadow: 0 0 70px rgba(187,119,255,.2), inset 0 0 40px rgba(187,119,255,.07);
+    }
+    .ls-result-card[data-w="2"] {
+      background: linear-gradient(160deg, rgba(40,33,6,.97), rgba(7,7,26,.97));
+      border: 2px solid rgba(255,215,0,.65);
+      box-shadow: 0 0 70px rgba(255,215,0,.2), inset 0 0 40px rgba(255,215,0,.07);
+    }
+    .ls-rc-wheel-lbl {
+      font-family: 'Bebas Neue', sans-serif; font-size: .85em;
+      letter-spacing: 5px; opacity: .5;
+    }
+    .ls-rc-wheel-lbl[data-w="0"] { color: #4488ff; }
+    .ls-rc-wheel-lbl[data-w="1"] { color: #bb77ff; }
+    .ls-rc-wheel-lbl[data-w="2"] { color: var(--gold); }
+    .ls-rc-divider {
+      width: 60px; height: 2px; border-radius: 2px; opacity: .35;
+    }
+    .ls-result-card[data-w="0"] .ls-rc-divider { background: #4488ff; }
+    .ls-result-card[data-w="1"] .ls-rc-divider { background: #bb77ff; }
+    .ls-result-card[data-w="2"] .ls-rc-divider { background: var(--gold); }
+    .ls-rc-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.8em, 4.5vw, 3.8em);
+      letter-spacing: 3px; line-height: 1.15;
+      word-break: break-word;
+    }
+    .ls-result-card[data-w="0"] .ls-rc-value { color: #88bbff; text-shadow: 0 0 35px rgba(68,136,255,.75); }
+    .ls-result-card[data-w="1"] .ls-rc-value { color: #dd99ff; text-shadow: 0 0 35px rgba(187,119,255,.75); }
+    .ls-result-card[data-w="2"] .ls-rc-value { color: #ffd700; text-shadow: 0 0 35px rgba(255,215,0,.75); }
+    .ls-result-pts-row {
+      font-family: 'Bebas Neue', sans-serif; font-size: 2em;
+      letter-spacing: 8px; color: var(--gold); flex-shrink: 0;
+      animation: rs-pts-glow 1.6s ease-in-out infinite;
+    }
+    @keyframes rs-pts-glow {
+      0%,100% { text-shadow: 0 0 20px rgba(255,215,0,.5); }
+      50%      { text-shadow: 0 0 55px rgba(255,215,0,1), 0 0 90px rgba(255,215,0,.45); }
+    }
     .ls-scoreboard { width: 200px; flex-shrink: 0; background: rgba(0,0,0,.35); border-radius: 14px; border: 1px solid rgba(255,255,255,.08); padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin: 16px 16px 16px 0; }
     .ls-sb-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.05em; letter-spacing: 3px; color: rgba(255,255,255,.4); text-align: center; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 7px; margin-bottom: 2px; }
     .ls-sb-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; transition: all .3s; cursor: default; }
@@ -720,6 +789,9 @@
       <div class="ls-wheels-section" id="ls-wheels-section">
         <!-- Wheel cols rendered by JS -->
       </div>
+      <div id="ls-result-stage" class="ls-result-stage">
+        <!-- Populated by JS after spin -->
+      </div>
     </div>
     <div class="ls-scoreboard" id="ls-scoreboard">
       <div class="ls-sb-title">SCORES</div>
@@ -727,11 +799,6 @@
     </div>
   </div>
   <div class="ls-mod-bar">
-    <div class="ls-result-panel" id="ls-result-panel">
-      <div class="ls-result-title">SPIN RESULT</div>
-      <div class="ls-result-items" id="ls-result-items"></div>
-      <div class="ls-pts-badge" id="ls-pts-badge">⭐ 100 PTS</div>
-    </div>
     <button class="btn-ls-spin" id="btn-ls-spin" onclick="startLSSpin()">SPIN!</button>
   </div>
 </div>
@@ -1850,22 +1917,17 @@ function startLSRound() {
   // Update UI
   document.getElementById('ls-tb-round').textContent = `ROUND ${LS.currentRound} OF ${LS.totalRounds}`;
   document.getElementById('ls-tb-pts').textContent = `⭐ ${LS.pointsPerRound} PTS`;
-  document.getElementById('ls-pts-badge').textContent = `⭐ ${LS.pointsPerRound} PTS`;
 
-  // Hide result panel
-  const rp = document.getElementById('ls-result-panel');
-  rp.classList.remove('visible');
-
-  // Reset result labels
-  for(let i=0;i<3;i++){
-    const rl=document.getElementById(`ls-result-lbl-${i}`);
-    if(rl){ rl.style.opacity='0'; rl.textContent=''; }
-  }
+  // Hide result stage, restore wheels
+  const stage = document.getElementById('ls-result-stage');
+  stage.classList.remove('active');
+  stage.innerHTML = '';
+  const sec = document.getElementById('ls-wheels-section');
+  sec.style.display = '';
+  gsap.set(sec, {opacity:1, clearProps:'height,paddingTop,paddingBottom'});
 
   // Reset wheels
-  wheelReels.forEach((wr,i)=>{
-    if(wr) { wr.reset(); }
-  });
+  wheelReels.forEach((wr)=>{ if(wr) wr.reset(); });
 
   // Re-enable spin button, remove pressable from sb cards
   document.getElementById('btn-ls-spin').disabled = false;
@@ -1874,10 +1936,6 @@ function startLSRound() {
     c.style.cursor='default';
     c.onclick=null;
   });
-
-  // Show wheels section if collapsed
-  const sec = document.getElementById('ls-wheels-section');
-  gsap.set(sec, {opacity:1, height:'auto'});
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2013,43 +2071,73 @@ function onWheelLock(idx, resultIdx) {
     });
     // Confetti from wheel area
     spawnConfetti(80);
-    // Pulse all result labels
-    for(let i=0;i<3;i++){
-      const el=document.getElementById(`ls-result-lbl-${i}`);
-      if(el) gsap.to(el,{scale:1.1,duration:.15,yoyo:true,repeat:3,onComplete:()=>gsap.set(el,{scale:1})});
-    }
     playComboFanfare();
-    // After 1500ms show result panel and start activity phase
-    const t = setTimeout(()=>{
-      showLSResultPanel();
-      startActivityPhase();
-    }, 1500);
+    // After 1500ms start activity phase (builds result stage internally)
+    const t = setTimeout(()=>{ startActivityPhase(); }, 1500);
     LS.spinTimeouts.push(t);
   }
 }
 
-function showLSResultPanel() {
-  const panel = document.getElementById('ls-result-panel');
-  const items = document.getElementById('ls-result-items');
-  items.innerHTML = '';
-  LS.wheels.forEach((wh,wi)=>{
-    const chip=document.createElement('div'); chip.className='ls-result-chip';
-    const lbl=document.createElement('div'); lbl.className='ls-result-chip-label'; lbl.textContent=wh.label||`WHEEL ${wi+1}`;
-    const val=document.createElement('div'); val.className='ls-result-chip-val'; val.textContent=LS.results[wi]||'?';
-    chip.appendChild(lbl); chip.appendChild(val);
-    items.appendChild(chip);
+function buildResultStage() {
+  const stage = document.getElementById('ls-result-stage');
+  stage.innerHTML = '';
+
+  const row = document.createElement('div');
+  row.className = 'ls-result-cards-row';
+
+  LS.wheels.forEach((wh, wi) => {
+    const card = document.createElement('div');
+    card.className = 'ls-result-card';
+    card.dataset.w = wi;
+
+    const wlbl = document.createElement('div');
+    wlbl.className = 'ls-rc-wheel-lbl';
+    wlbl.dataset.w = wi;
+    wlbl.textContent = wh.label || `WHEEL ${wi+1}`;
+
+    const divider = document.createElement('div');
+    divider.className = 'ls-rc-divider';
+
+    const val = document.createElement('div');
+    val.className = 'ls-rc-value';
+    val.textContent = LS.results[wi] || '?';
+
+    card.appendChild(wlbl);
+    card.appendChild(divider);
+    card.appendChild(val);
+    row.appendChild(card);
   });
-  panel.classList.add('visible');
-  gsap.fromTo(panel,{y:60,opacity:0},{y:0,opacity:1,duration:.6,ease:'back.out(1.7)'});
+
+  const ptsRow = document.createElement('div');
+  ptsRow.className = 'ls-result-pts-row';
+  ptsRow.textContent = `⭐  ${LS.pointsPerRound} PTS`;
+
+  stage.appendChild(row);
+  stage.appendChild(ptsRow);
+  return stage;
 }
 
 function startActivityPhase() {
   LS.activityPhase = true;
   LS.spinning = false;
 
-  // Collapse wheels
+  // Collapse wheels, then reveal result stage
   const sec = document.getElementById('ls-wheels-section');
-  gsap.to(sec, {opacity:0, height:0, paddingTop:0, paddingBottom:0, duration:.6, ease:'power2.inOut'});
+  gsap.to(sec, {
+    opacity: 0, duration: .4, ease: 'power2.in',
+    onComplete: () => {
+      sec.style.display = 'none';
+      const stage = buildResultStage();
+      stage.classList.add('active');
+      const cards = stage.querySelectorAll('.ls-result-card');
+      gsap.fromTo(cards,
+        { y: 80, opacity: 0, scale: 0.82 },
+        { y: 0, opacity: 1, scale: 1, duration: .75, ease: 'back.out(1.5)', stagger: .13 }
+      );
+      const ptsRow = stage.querySelector('.ls-result-pts-row');
+      if (ptsRow) gsap.fromTo(ptsRow, { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: .5, delay: .45, ease: 'power2.out' });
+    }
+  });
 
   // Show GO! banner
   const banner = document.getElementById('ls-go-banner');
