@@ -367,6 +367,21 @@
     }
     .btn-wcp-shuffle:hover { background: rgba(255,255,255,.14); }
     .ls-config-bottom { background: var(--glass); border: 1px solid var(--gborder); border-radius: 16px; padding: 22px 28px; backdrop-filter: blur(12px); display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+    /* Presets bar */
+    .ls-presets-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 18px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; flex-wrap: wrap; }
+    .ls-presets-lbl { font-family: 'Bebas Neue', sans-serif; font-size: .85em; letter-spacing: 3px; color: rgba(255,255,255,.4); flex-shrink: 0; }
+    .btn-ls-preset { background: linear-gradient(135deg,#1a0a38,#2d1060); border: 1px solid rgba(153,85,255,.5); border-radius: 8px; padding: 8px 18px; color: #cc88ff; font-family: 'Bebas Neue', sans-serif; font-size: .95em; letter-spacing: 2px; cursor: pointer; transition: all .2s; }
+    .btn-ls-preset:hover { background: linear-gradient(135deg,#2d1060,#4a1890); border-color: #9955ff; box-shadow: 0 0 16px rgba(153,85,255,.35); transform: translateY(-1px); }
+    .btn-ls-preset.active { background: linear-gradient(135deg,#9955ff,#6633cc); border-color: #cc88ff; color: #fff; box-shadow: 0 0 20px rgba(153,85,255,.5); }
+    /* Dynamic wheel panel */
+    .wcp-dynamic-badge { display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1; background: rgba(153,85,255,.08); border: 1px dashed rgba(153,85,255,.35); border-radius: 10px; padding: 20px; text-align: center; min-height: 80px; }
+    .wcp-dyn-icon { font-size: 1.4em; }
+    .wcp-dyn-text { font-family: 'Bebas Neue', sans-serif; font-size: .95em; letter-spacing: 3px; color: rgba(153,85,255,.7); line-height: 1.4; }
+    /* Pending wheel overlay */
+    .ls-wheel-pending-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(5,5,20,.82); border-radius: 12px; backdrop-filter: blur(2px); }
+    .ls-wpo-dots { font-size: 2em; animation: wpo-pulse 1.2s ease-in-out infinite; }
+    .ls-wpo-label { font-family: 'Bebas Neue', sans-serif; font-size: .85em; letter-spacing: 4px; color: rgba(153,85,255,.6); }
+    @keyframes wpo-pulse { 0%,100%{opacity:.3;transform:scale(.95)} 50%{opacity:1;transform:scale(1.05)} }
     .ls-config-field { display: flex; align-items: center; gap: 10px; }
     .ls-config-field label { font-size: .82em; color: rgba(255,255,255,.5); letter-spacing: 2px; text-transform: uppercase; }
     .ls-config-field input { width: 88px; text-align: center; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.2); border-radius: 7px; padding: 8px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 1.15em; font-weight: 700; }
@@ -759,6 +774,10 @@
       <button class="btn-back" onclick="goScreen('screen-register')">← BACK</button>
       <div class="ls-config-title">LUCKY SPIN</div>
     </div>
+    <div class="ls-presets-bar">
+      <span class="ls-presets-lbl">PRECARGAR:</span>
+      <button class="btn-ls-preset" id="btn-preset-bible" onclick="applyBiblePreset()">📖 Biblia — Libro / Capítulo / Versículo</button>
+    </div>
     <div class="ls-wheels-config" id="ls-wheels-config">
       <!-- Wheel panels rendered by JS -->
     </div>
@@ -864,10 +883,83 @@ let LS = {
   ],
   totalRounds:5, pointsPerRound:100, currentRound:0,
   results:[null,null,null], roundWinner:null,
-  spinning:false, activityPhase:false, spinTimeouts:[]
+  spinning:false, activityPhase:false, spinTimeouts:[],
+  bibleMode: false
 };
 
 let wheelReels = [null, null, null];
+
+// ══════════════════════════════════════════════════════════
+//  BIBLE DATA (66 books, verse counts per chapter — RV1960)
+// ══════════════════════════════════════════════════════════
+const BIBLE_ES = [
+  {n:'Génesis',      v:[31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26]},
+  {n:'Éxodo',        v:[22,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,27,38,27,53,46,28]},
+  {n:'Levítico',     v:[17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,24,33,3,17,27,22,13,8,30]},
+  {n:'Números',      v:[54,34,51,49,31,27,89,26,23,36,35,16,33,45,41,50,13,32,22,29,35,41,30,25,18,65,23,31,40,16,54,42,56,29,34,13]},
+  {n:'Deuteronomio', v:[46,37,29,49,33,25,26,20,29,22,32,32,18,29,23,22,20,22,21,20,23,30,25,22,19,19,26,68,29,20,30,52,29,12]},
+  {n:'Josué',        v:[18,24,17,24,15,27,26,35,27,43,23,24,33,15,63,10,18,28,51,9,45,34,16,33]},
+  {n:'Jueces',       v:[36,23,31,24,31,40,25,35,57,18,40,15,25,20,20,31,13,31,30,48,25]},
+  {n:'Rut',          v:[22,23,18,22]},
+  {n:'1 Samuel',     v:[28,36,21,22,12,21,17,22,27,27,15,25,23,52,35,23,58,30,24,42,15,23,29,22,44,25,12,25,11,31,13]},
+  {n:'2 Samuel',     v:[27,32,39,12,25,23,29,18,13,19,27,31,39,33,37,23,29,33,43,26,22,51,39,25]},
+  {n:'1 Reyes',      v:[53,46,28,34,18,38,51,66,28,29,43,33,34,31,34,34,24,46,21,43,29,53]},
+  {n:'2 Reyes',      v:[18,25,27,44,27,33,20,29,37,36,21,21,25,29,38,20,41,37,37,21,26,20,37,20,30]},
+  {n:'1 Crónicas',   v:[54,55,24,43,26,81,40,40,44,14,47,40,14,17,29,43,27,17,19,8,30,19,32,31,31,32,34,21,30]},
+  {n:'2 Crónicas',   v:[17,18,17,22,14,42,22,18,31,19,23,16,22,15,19,14,19,34,11,37,20,12,21,27,28,23,9,27,36,27,21,33,25,33,27,23]},
+  {n:'Esdras',       v:[11,70,13,24,17,22,28,36,15,44]},
+  {n:'Nehemías',     v:[11,20,32,23,19,19,73,18,38,39,36,47,31]},
+  {n:'Ester',        v:[22,23,15,17,14,14,10,17,32,3]},
+  {n:'Job',          v:[22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17]},
+  {n:'Salmos',       v:[6,12,8,8,12,10,17,9,20,18,7,8,6,7,5,11,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,20,28,22,35,22,46,18,24,17,17,11,11,16,16,13,16,20,28,13,28,39,40,29,25,27,26,32,22,29,25,28,28,25,31,24,23,22,23,29,22,31,25,28,32,32,31,28,26,15,16,22,23,23,13,14,27,7,6,8,13,13,19,22,18,24,20,21,13,23,11,20,19,17,27,25,22,22,22,11,11,28,28,25,26,20,25,25,22,17,19,17,18,20,19,19,23,23,23,21,25,22,25,30,31,30,21,25]},
+  {n:'Proverbios',   v:[33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,62,48,22]},
+  {n:'Eclesiastés',  v:[18,26,22,16,20,12,29,17,18,20,10,14]},
+  {n:'Cantares',     v:[17,17,11,16,16,13,13,14]},
+  {n:'Isaías',       v:[31,22,26,6,30,13,25,22,21,34,16,6,22,32,9,14,14,7,25,6,17,25,18,23,12,21,13,29,24,33,9,20,24,17,10,22,38,22,8,31,29,25,28,28,25,13,15,22,26,11,23,15,12,17,13,12,21,14,21,22,11,12,19,12,25,24]},
+  {n:'Jeremías',     v:[19,37,25,31,31,30,34,22,26,25,23,17,27,22,21,21,27,23,15,18,14,30,40,10,38,24,22,17,32,24,40,44,26,22,19,32,21,28,18,16,18,22,13,30,5,28,7,47,39,46,64,34]},
+  {n:'Lamentaciones',v:[22,22,66,22,22]},
+  {n:'Ezequiel',     v:[28,10,27,17,17,14,27,18,11,22,25,28,23,23,8,63,24,32,14,49,32,31,49,27,17,21,36,26,21,26,18,32,33,31,15,38,28,23,29,49,26,20,27,31,25,24,23,35]},
+  {n:'Daniel',       v:[21,49,30,37,31,28,28,27,27,21,45,13]},
+  {n:'Oseas',        v:[11,23,5,19,15,11,16,14,17,15,12,14,16,9]},
+  {n:'Joel',         v:[20,32,21]},
+  {n:'Amós',         v:[15,16,15,13,27,14,17,14,15]},
+  {n:'Abdías',       v:[21]},
+  {n:'Jonás',        v:[17,10,10,11]},
+  {n:'Miqueas',      v:[16,13,12,13,15,16,20]},
+  {n:'Nahúm',        v:[15,13,19]},
+  {n:'Habacuc',      v:[17,20,19]},
+  {n:'Sofonías',     v:[18,15,20]},
+  {n:'Hageo',        v:[15,23]},
+  {n:'Zacarías',     v:[21,13,10,14,11,15,14,23,17,12,17,14,9,21]},
+  {n:'Malaquías',    v:[14,17,18,6]},
+  {n:'Mateo',        v:[25,23,17,25,48,34,29,34,38,42,30,50,58,36,39,28,27,35,30,34,46,46,39,51,46,75,66,20]},
+  {n:'Marcos',       v:[45,28,35,41,43,56,37,38,50,52,33,44,37,72,47,20]},
+  {n:'Lucas',        v:[80,52,38,44,39,49,50,56,62,42,54,59,35,35,32,31,37,43,48,47,38,71,56,53]},
+  {n:'Juan',         v:[51,25,36,54,47,71,53,59,41,42,57,50,38,31,27,33,26,40,42,31,25]},
+  {n:'Hechos',       v:[26,47,26,37,42,15,60,40,43,48,30,25,52,28,41,40,34,28,40,38,40,30,35,27,27,32,44,31]},
+  {n:'Romanos',      v:[32,29,31,25,21,23,25,39,33,21,36,21,14,26,33,24]},
+  {n:'1 Corintios',  v:[31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,24]},
+  {n:'2 Corintios',  v:[24,17,18,18,21,18,16,24,15,18,33,21,14]},
+  {n:'Gálatas',      v:[24,21,29,31,26,18]},
+  {n:'Efesios',      v:[23,22,21,28,20,12]},
+  {n:'Filipenses',   v:[30,30,21,23]},
+  {n:'Colosenses',   v:[29,23,25,18]},
+  {n:'1 Tesalonicenses', v:[10,20,13,18,28]},
+  {n:'2 Tesalonicenses', v:[12,17,18]},
+  {n:'1 Timoteo',    v:[20,15,16,16,25,21]},
+  {n:'2 Timoteo',    v:[18,26,17,22]},
+  {n:'Tito',         v:[16,15,15]},
+  {n:'Filemón',      v:[25]},
+  {n:'Hebreos',      v:[14,18,19,16,14,20,28,13,28,39,40,29,25]},
+  {n:'Santiago',     v:[27,26,18,17,20]},
+  {n:'1 Pedro',      v:[25,25,22,19,14]},
+  {n:'2 Pedro',      v:[21,22,18]},
+  {n:'1 Juan',       v:[10,29,24,21,21]},
+  {n:'2 Juan',       v:[13]},
+  {n:'3 Juan',       v:[14]},
+  {n:'Judas',        v:[25]},
+  {n:'Apocalipsis',  v:[20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21]}
+];
 
 // ══════════════════════════════════════════════════════════
 //  AUDIO
@@ -1679,7 +1771,7 @@ function buildPodium(stageId, players, actionsId) {
 //  LUCKY SPIN CONFIG
 // ══════════════════════════════════════════════════════════
 function initLSConfig() {
-  // Reset LS state
+  LS.bibleMode = false;
   LS.wheels = [
     { label:'TOPIC', options:[] },
     { label:'CATEGORY', options:[] },
@@ -1691,6 +1783,17 @@ function initLSConfig() {
   document.getElementById('ls-rounds-inp').value = 5;
   document.getElementById('ls-pts-inp').value = 100;
   renderLSConfig();
+}
+
+function applyBiblePreset() {
+  LS.bibleMode = true;
+  LS.wheels = [
+    { label:'LIBRO',     options: BIBLE_ES.map(b=>b.n) },
+    { label:'CAPÍTULO',  options: [], dynamic: true },
+    { label:'VERSÍCULO', options: [], dynamic: true }
+  ];
+  renderLSConfig();
+  document.getElementById('btn-preset-bible').classList.add('active');
 }
 
 function renderLSConfig() {
@@ -1706,30 +1809,40 @@ function renderLSConfig() {
     titleInp.placeholder=`WHEEL ${wi+1} LABEL`; titleInp.value=wh.label; titleInp.maxLength=20;
     titleInp.oninput = e => { LS.wheels[wi].label = e.target.value.toUpperCase(); };
 
-    const optList = document.createElement('div'); optList.className='wcp-options'; optList.id=`wcp-opts-${wi}`;
-    renderWheelOptions(wi, optList);
-
-    const addRow = document.createElement('div'); addRow.className='wcp-add-row';
-    const addInp = document.createElement('input');
-    addInp.type='text'; addInp.className='wcp-add-inp';
-    addInp.placeholder='Add option…'; addInp.maxLength=30; addInp.id=`wcp-add-inp-${wi}`;
-    const charCount = document.createElement('span'); charCount.className='wcp-char-count'; charCount.textContent='0/30';
-    addInp.oninput = () => { charCount.textContent=`${addInp.value.length}/30`; };
-    addInp.onkeydown = e => { if(e.key==='Enter') addWheelOption(wi); };
-    const addBtn = document.createElement('button'); addBtn.className='btn-wcp-add'; addBtn.textContent='+';
-    addBtn.onclick = () => addWheelOption(wi);
-    addRow.appendChild(addInp); addRow.appendChild(charCount); addRow.appendChild(addBtn);
-
-    const errDiv = document.createElement('div'); errDiv.className='wcp-error'; errDiv.id=`wcp-err-${wi}`;
-
-    const shufBtn = document.createElement('button'); shufBtn.className='btn-wcp-shuffle';
-    shufBtn.textContent='🔀 Shuffle'; shufBtn.onclick=()=>shuffleWheelOptions(wi);
-
     panel.appendChild(titleInp);
-    panel.appendChild(optList);
-    panel.appendChild(addRow);
-    panel.appendChild(errDiv);
-    panel.appendChild(shufBtn);
+
+    if (wh.dynamic) {
+      // Dynamic wheel — show auto badge instead of option UI
+      const badge = document.createElement('div'); badge.className='wcp-dynamic-badge';
+      const dynDescriptions = ['','Se llenará con los capítulos del libro seleccionado','Se llenará con los versículos del capítulo seleccionado'];
+      badge.innerHTML=`<div class="wcp-dyn-icon">⚡</div><div class="wcp-dyn-text">AUTOMÁTICO<br><span style="font-size:.8em;opacity:.7">${dynDescriptions[wi]}</span></div>`;
+      panel.appendChild(badge);
+    } else {
+      const optList = document.createElement('div'); optList.className='wcp-options'; optList.id=`wcp-opts-${wi}`;
+      renderWheelOptions(wi, optList);
+
+      const addRow = document.createElement('div'); addRow.className='wcp-add-row';
+      const addInp = document.createElement('input');
+      addInp.type='text'; addInp.className='wcp-add-inp';
+      addInp.placeholder='Add option…'; addInp.maxLength=30; addInp.id=`wcp-add-inp-${wi}`;
+      const charCount = document.createElement('span'); charCount.className='wcp-char-count'; charCount.textContent='0/30';
+      addInp.oninput = () => { charCount.textContent=`${addInp.value.length}/30`; };
+      addInp.onkeydown = e => { if(e.key==='Enter') addWheelOption(wi); };
+      const addBtn = document.createElement('button'); addBtn.className='btn-wcp-add'; addBtn.textContent='+';
+      addBtn.onclick = () => addWheelOption(wi);
+      addRow.appendChild(addInp); addRow.appendChild(charCount); addRow.appendChild(addBtn);
+
+      const errDiv = document.createElement('div'); errDiv.className='wcp-error'; errDiv.id=`wcp-err-${wi}`;
+
+      const shufBtn = document.createElement('button'); shufBtn.className='btn-wcp-shuffle';
+      shufBtn.textContent='🔀 Shuffle'; shufBtn.onclick=()=>shuffleWheelOptions(wi);
+
+      panel.appendChild(optList);
+      panel.appendChild(addRow);
+      panel.appendChild(errDiv);
+      panel.appendChild(shufBtn);
+    }
+
     wrap.appendChild(panel);
   });
   validateLSConfig();
@@ -1776,6 +1889,7 @@ function shuffleWheelOptions(wi) {
 function validateLSConfig() {
   let allValid = true;
   LS.wheels.forEach((wh, wi) => {
+    if (wh.dynamic) return; // auto-populated at spin time
     const err = document.getElementById(`wcp-err-${wi}`);
     if (!err) return;
     if (wh.options.length < 3) {
@@ -1872,6 +1986,13 @@ function buildLSGameBoard() {
     vp.appendChild(fadeBot);
     vp.appendChild(sel);
 
+    // Pending overlay for dynamic (bible mode) wheels 2 & 3
+    if (wh.dynamic) {
+      const pending = document.createElement('div'); pending.className='ls-wheel-pending-overlay'; pending.id=`ls-wpend-${wi}`;
+      pending.innerHTML=`<div class="ls-wpo-dots">⋯</div><div class="ls-wpo-label">ESPERANDO...</div>`;
+      vp.appendChild(pending);
+    }
+
     // Result label below wheel
     const resultLbl = document.createElement('div'); resultLbl.className='ls-result-label'; resultLbl.dataset.w=wi;
     resultLbl.id = `ls-result-lbl-${wi}`;
@@ -1881,8 +2002,12 @@ function buildLSGameBoard() {
     col.appendChild(resultLbl);
     sec.appendChild(col);
 
-    // Initialize WheelReel
-    wheelReels[wi] = new WheelReel(reel, wh.options);
+    // Initialize WheelReel (dynamic wheels start with a placeholder tile)
+    if (wh.dynamic) {
+      wheelReels[wi] = null; // will be built lazily
+    } else {
+      wheelReels[wi] = new WheelReel(reel, wh.options);
+    }
   });
 
   // Build scoreboard
@@ -1926,8 +2051,25 @@ function startLSRound() {
   sec.style.display = '';
   gsap.set(sec, {opacity:1, clearProps:'height,paddingTop,paddingBottom'});
 
-  // Reset wheels
-  wheelReels.forEach((wr)=>{ if(wr) wr.reset(); });
+  // Reset wheels; in bible mode, clear dynamic wheels and restore pending overlay
+  wheelReels.forEach((wr, wi)=>{
+    if(wr) { wr.reset(); }
+    if (LS.bibleMode && LS.wheels[wi] && LS.wheels[wi].dynamic) {
+      wheelReels[wi] = null;
+      LS.wheels[wi].options = [];
+      const vp = document.getElementById(`ls-wheel-vp-${wi}`);
+      const reel = document.getElementById(`ls-reel-${wi}`);
+      if (reel) reel.innerHTML = '';
+      if (vp && !vp.querySelector('.ls-wheel-pending-overlay')) {
+        const pend = document.createElement('div'); pend.className='ls-wheel-pending-overlay'; pend.id=`ls-wpend-${wi}`;
+        pend.innerHTML=`<div class="ls-wpo-dots">⋯</div><div class="ls-wpo-label">ESPERANDO...</div>`;
+        pend.style.opacity = '1';
+        vp.appendChild(pend);
+      }
+      const rl = document.getElementById(`ls-result-lbl-${wi}`);
+      if (rl) { rl.style.opacity='0'; rl.textContent=''; }
+    }
+  });
 
   // Re-enable spin button, remove pressable from sb cards
   document.getElementById('btn-ls-spin').disabled = false;
@@ -1999,46 +2141,117 @@ class WheelReel {
 // ══════════════════════════════════════════════════════════
 //  SPIN SEQUENCE
 // ══════════════════════════════════════════════════════════
+// ── helper: rebuild a wheel's reel DOM + WheelReel instance ────────────────
+function rebuildWheelReel(idx, options) {
+  const reel = document.getElementById(`ls-reel-${idx}`);
+  if (!reel) return;
+  if (wheelReels[idx]) { wheelReels[idx].reset(); wheelReels[idx] = null; }
+  reel.innerHTML = '';
+  for (let copy=0; copy<8; copy++) {
+    options.forEach((opt, oi) => {
+      const tile = document.createElement('div'); tile.className = 'ls-tile';
+      tile.style.background = WHEEL_COLORS[(oi+copy) % WHEEL_COLORS.length];
+      tile.textContent = opt;
+      reel.appendChild(tile);
+    });
+  }
+  LS.wheels[idx].options = options;
+  wheelReels[idx] = new WheelReel(reel, options);
+}
+
+// ── helper: remove pending overlay and reveal a wheel ──────────────────────
+function activateWheel(idx) {
+  const overlay = document.getElementById(`ls-wpend-${idx}`);
+  if (overlay) gsap.to(overlay, {opacity:0, duration:.3, onComplete:()=>overlay.remove()});
+}
+
 function startLSSpin() {
   if (LS.spinning || LS.activityPhase) return;
   LS.spinning = true;
   document.getElementById('btn-ls-spin').disabled = true;
+  gsap.to('body', {backgroundColor:'#05051a', duration:.5});
 
-  // Pick random results
+  if (LS.bibleMode) {
+    startBibleSpin();
+  } else {
+    startNormalSpin();
+  }
+}
+
+function startNormalSpin() {
   const r0 = Math.floor(Math.random()*LS.wheels[0].options.length);
   const r1 = Math.floor(Math.random()*LS.wheels[1].options.length);
   const r2 = Math.floor(Math.random()*LS.wheels[2].options.length);
 
-  // Start all 3 wheels spinning
   wheelReels.forEach((wr,i)=>{ if(wr) wr.startSpin(10+i*1.5); });
   playWheelLaunchWhir();
 
-  // Dim background slightly
-  gsap.to('body', {backgroundColor:'#05051a', duration:.5});
+  const add = (fn, delay) => { const t=setTimeout(fn,delay); LS.spinTimeouts.push(t); };
 
-  const addTimeout = (fn, delay) => {
-    const t = setTimeout(fn, delay);
-    LS.spinTimeouts.push(t);
-    return t;
-  };
+  add(() => { playDrumRoll(0); if(wheelReels[0]) wheelReels[0].stop(r0, 1.5, ()=>onWheelLock(0, r0)); }, 3000);
+  add(() => { playDrumRoll(1); if(wheelReels[1]) wheelReels[1].stop(r1, 2.0, ()=>onWheelLock(1, r1)); }, 7500);
+  add(() => { playDrumRoll(2); if(wheelReels[2]) wheelReels[2].stop(r2, 3.0, ()=>onWheelLock(2, r2)); }, 12500);
+}
 
-  // t=3000: wheel 0 stops
-  addTimeout(() => {
+function startBibleSpin() {
+  const add = (fn, delay) => { const t=setTimeout(fn,delay); LS.spinTimeouts.push(t); return t; };
+
+  // Phase 1 — Spin Wheel 1 (books)
+  wheelReels[0].startSpin(12);
+  playWheelLaunchWhir();
+
+  const r0 = Math.floor(Math.random() * LS.wheels[0].options.length);
+
+  add(() => {
     playDrumRoll(0);
-    if(wheelReels[0]) wheelReels[0].stop(r0, 1.5, ()=>onWheelLock(0, r0));
-  }, 3000);
+    wheelReels[0].stop(r0, 1.8, () => {
+      onWheelLock(0, r0);
 
-  // t=7500: wheel 1 stops
-  addTimeout(() => {
-    playDrumRoll(1);
-    if(wheelReels[1]) wheelReels[1].stop(r1, 2.0, ()=>onWheelLock(1, r1));
-  }, 7500);
+      // Determine chapter count for chosen book
+      const bookName = LS.wheels[0].options[r0];
+      const bookData = BIBLE_ES.find(b => b.n === bookName);
+      const chapterOpts = Array.from({length: bookData ? bookData.v.length : 10}, (_,i)=>`${i+1}`);
 
-  // t=12500: wheel 2 stops
-  addTimeout(() => {
-    playDrumRoll(2);
-    if(wheelReels[2]) wheelReels[2].stop(r2, 3.0, ()=>onWheelLock(2, r2));
-  }, 12500);
+      // Phase 2 — Build & spin Wheel 2 (chapters)
+      add(() => {
+        rebuildWheelReel(1, chapterOpts);
+        activateWheel(1);
+        add(() => {
+          const r1 = Math.floor(Math.random() * chapterOpts.length);
+          wheelReels[1].startSpin(11);
+          playWheelLaunchWhir();
+
+          add(() => {
+            playDrumRoll(1);
+            wheelReels[1].stop(r1, 2.0, () => {
+              onWheelLock(1, r1);
+
+              // Determine verse count for chosen chapter
+              const chapterIdx = parseInt(chapterOpts[r1]) - 1;
+              const verseCount = bookData ? (bookData.v[chapterIdx] || 10) : 10;
+              const verseOpts = Array.from({length: verseCount}, (_,i)=>`${i+1}`);
+
+              // Phase 3 — Build & spin Wheel 3 (verses)
+              add(() => {
+                rebuildWheelReel(2, verseOpts);
+                activateWheel(2);
+                add(() => {
+                  const r2 = Math.floor(Math.random() * verseOpts.length);
+                  wheelReels[2].startSpin(10);
+                  playWheelLaunchWhir();
+
+                  add(() => {
+                    playDrumRoll(2);
+                    wheelReels[2].stop(r2, 2.5, () => onWheelLock(2, r2));
+                  }, 3500);
+                }, 400); // slight pause before wheel 3 launch
+              }, 600); // pause after wheel 2 locks
+            });
+          }, 4000); // wheel 2 spin duration
+        }, 400); // slight pause before wheel 2 launch
+      }, 600); // pause after wheel 1 locks
+    });
+  }, 3500); // wheel 1 spin duration
 }
 
 function onWheelLock(idx, resultIdx) {
