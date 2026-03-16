@@ -1918,6 +1918,7 @@ function startLSGame() {
   // validate
   let allValid=true;
   LS.wheels.forEach((wh,wi)=>{
+    if(wh.dynamic) return; // populated at spin time
     if(wh.options.length < 3) {
       allValid=false;
       const errEl=document.getElementById(`wcp-err-${wi}`);
