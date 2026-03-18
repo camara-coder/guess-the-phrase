@@ -378,7 +378,7 @@
     .wcp-dyn-icon { font-size: 1.4em; }
     .wcp-dyn-text { font-family: 'Bebas Neue', sans-serif; font-size: .95em; letter-spacing: 3px; color: rgba(153,85,255,.7); line-height: 1.4; }
     /* Pending wheel overlay */
-    .ls-wheel-pending-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(5,5,20,.82); border-radius: 12px; backdrop-filter: blur(2px); }
+    .ls-wheel-pending-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(6,6,15,.85); border-radius: 8px; backdrop-filter: blur(2px); }
     .ls-wpo-dots { font-size: 2em; animation: wpo-pulse 1.2s ease-in-out infinite; }
     .ls-wpo-label { font-family: 'Bebas Neue', sans-serif; font-size: .85em; letter-spacing: 4px; color: rgba(153,85,255,.6); }
     @keyframes wpo-pulse { 0%,100%{opacity:.3;transform:scale(.95)} 50%{opacity:1;transform:scale(1.05)} }
@@ -408,32 +408,66 @@
     .ls-body { display: flex; flex: 1; min-height: 0; }
     .ls-left { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .ls-wheels-section { display: flex; justify-content: center; align-items: stretch; gap: 24px; padding: 16px 20px; flex: 1; min-height: 0; transition: all .5s ease; }
-    .ls-wheel-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; max-width: 300px; min-width: 120px; }
-    .ls-wheel-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.1em; letter-spacing: 3px; color: rgba(255,255,255,.55); flex-shrink: 0; }
+    .ls-wheel-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; max-width: 300px; min-width: 130px; }
+    .ls-wheel-label { font-family: 'Bebas Neue', sans-serif; font-size: .95em; letter-spacing: 4px; flex-shrink: 0; padding: 3px 16px; border-radius: 4px; background: linear-gradient(90deg,rgba(255,255,255,.03),rgba(255,255,255,.08),rgba(255,255,255,.03)); border-top: 1px solid rgba(255,255,255,.12); border-bottom: 1px solid rgba(255,255,255,.05); }
+    .ls-wheel-label[data-w="0"] { color: #88aaff; text-shadow: 0 0 10px rgba(68,136,255,.6); }
+    .ls-wheel-label[data-w="1"] { color: #cc99ff; text-shadow: 0 0 10px rgba(153,85,255,.6); }
+    .ls-wheel-label[data-w="2"] { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,.6); }
+    /* ── Slot-machine housing (metallic outer frame) ── */
+    .ls-slot-housing {
+      position: relative; width: 100%; flex: 1;
+      background: linear-gradient(170deg, #2c2c44 0%, #1c1c2c 50%, #141420 100%);
+      border-radius: 16px; padding: 10px;
+      display: flex; flex-direction: column;
+    }
+    .ls-slot-housing[data-w="0"] { box-shadow: 0 0 0 2px rgba(68,136,255,.55), 0 0 0 4px rgba(68,136,255,.12), 0 10px 50px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.08); }
+    .ls-slot-housing[data-w="1"] { box-shadow: 0 0 0 2px rgba(153,85,255,.55), 0 0 0 4px rgba(153,85,255,.12), 0 10px 50px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.08); }
+    .ls-slot-housing[data-w="2"] { box-shadow: 0 0 0 2px rgba(255,215,0,.55), 0 0 0 4px rgba(255,215,0,.12), 0 10px 50px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.08); }
+    /* Corner bolts */
+    .ls-bolt { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #555, #111); border: 1px solid rgba(255,255,255,.07); box-shadow: inset 0 1px 3px rgba(0,0,0,.8); }
+    .ls-bolt-tl { top: 6px; left: 6px; } .ls-bolt-tr { top: 6px; right: 6px; }
+    .ls-bolt-bl { bottom: 6px; left: 6px; } .ls-bolt-br { bottom: 6px; right: 6px; }
+    /* Payline pointer arrows on the housing frame */
+    .ls-sel-ptr { position: absolute; top: 50%; transform: translateY(-50%); width:0; height:0; pointer-events:none; z-index:10; }
+    .ls-sel-ptr-left  { left:  3px; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 0; }
+    .ls-sel-ptr-right { right: 3px; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left:  0; }
+    .ls-slot-housing[data-w="0"] .ls-sel-ptr-left  { border-left:  13px solid #4488ff; }
+    .ls-slot-housing[data-w="0"] .ls-sel-ptr-right { border-right: 13px solid #4488ff; }
+    .ls-slot-housing[data-w="1"] .ls-sel-ptr-left  { border-left:  13px solid #bb77ff; }
+    .ls-slot-housing[data-w="1"] .ls-sel-ptr-right { border-right: 13px solid #bb77ff; }
+    .ls-slot-housing[data-w="2"] .ls-sel-ptr-left  { border-left:  13px solid #ffd700; }
+    .ls-slot-housing[data-w="2"] .ls-sel-ptr-right { border-right: 13px solid #ffd700; }
+    /* Glass viewport window */
     .ls-wheel-viewport {
       width: 100%; flex: 1; min-height: 220px;
       overflow: hidden; position: relative;
-      background: rgba(5,5,20,.8);
-      box-shadow: inset 0 0 20px rgba(0,0,0,.5);
-      border-radius: 12px;
+      background: #06060f;
+      border-radius: 8px;
+      box-shadow: inset 0 4px 20px rgba(0,0,0,.95), inset 0 -4px 20px rgba(0,0,0,.7);
+      border: 1px solid rgba(0,0,0,.9);
     }
-    .ls-wheel-viewport[data-w="0"] { border: 2px solid rgba(68,136,255,.4); }
-    .ls-wheel-viewport[data-w="1"] { border: 2px solid rgba(153,85,255,.4); }
-    .ls-wheel-viewport[data-w="2"] { border: 2px solid rgba(255,215,0,.4); }
+    .ls-wheel-viewport[data-w="0"] { border-color: rgba(68,136,255,.1); }
+    .ls-wheel-viewport[data-w="1"] { border-color: rgba(153,85,255,.1); }
+    .ls-wheel-viewport[data-w="2"] { border-color: rgba(255,215,0,.1); }
+    /* Glass sheen overlay */
+    .ls-glass-sheen { position: absolute; top: 0; left: 8%; right: 8%; height: 38%; background: linear-gradient(to bottom, rgba(255,255,255,.07) 0%, transparent 100%); border-radius: 0 0 60% 60%; pointer-events:none; z-index:5; }
     .ls-reel { position: absolute; top: 0; left: 0; width: 100%; will-change: transform; }
-    .ls-tile { height: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.1em; letter-spacing: 2px; color: #fff; text-align: center; padding: 6px 12px; word-break: break-word; line-height: 1.2; }
+    /* Slot reel bands */
+    .ls-tile { height: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.05em; letter-spacing: 2px; color: #fff; text-align: center; padding: 6px 12px; word-break: break-word; line-height: 1.2; position: relative; border-bottom: 1px solid rgba(0,0,0,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(0,0,0,.3); }
+    .ls-tile span { text-shadow: 0 1px 0 rgba(0,0,0,.9), 0 0 10px rgba(255,255,255,.18); display: block; }
     .ls-fade-top, .ls-fade-bot {
-      position: absolute; left: 0; right: 0; height: 150px; pointer-events: none; z-index: 2;
+      position: absolute; left: 0; right: 0; height: 140px; pointer-events: none; z-index: 2;
     }
-    .ls-fade-top { top: 0; background: linear-gradient(to bottom, rgba(5,5,20,1), transparent); }
-    .ls-fade-bot { bottom: 0; background: linear-gradient(to top, rgba(5,5,20,1), transparent); }
+    .ls-fade-top { top: 0; background: linear-gradient(to bottom, rgba(6,6,15,1) 0%, rgba(6,6,15,.6) 50%, transparent); }
+    .ls-fade-bot { bottom: 0; background: linear-gradient(to top, rgba(6,6,15,1) 0%, rgba(6,6,15,.6) 50%, transparent); }
+    /* Payline selector window */
     .ls-selector {
       position: absolute; left: 0; right: 0; height: 100px; top: 50%; transform: translateY(-50%);
-      z-index: 1; pointer-events: none;
+      z-index: 3; pointer-events: none;
     }
-    .ls-selector[data-w="0"] { border-top: 2px solid rgba(68,136,255,.8); border-bottom: 2px solid rgba(68,136,255,.8); box-shadow: 0 0 20px rgba(68,136,255,.3), inset 0 0 12px rgba(68,136,255,.1); }
-    .ls-selector[data-w="1"] { border-top: 2px solid rgba(153,85,255,.8); border-bottom: 2px solid rgba(153,85,255,.8); box-shadow: 0 0 20px rgba(153,85,255,.3), inset 0 0 12px rgba(153,85,255,.1); }
-    .ls-selector[data-w="2"] { border-top: 2px solid rgba(255,215,0,.8); border-bottom: 2px solid rgba(255,215,0,.8); box-shadow: 0 0 20px rgba(255,215,0,.3), inset 0 0 12px rgba(255,215,0,.1); }
+    .ls-selector[data-w="0"] { border-top: 2px solid rgba(68,136,255,.95); border-bottom: 2px solid rgba(68,136,255,.95); background: linear-gradient(to bottom, rgba(68,136,255,.18), rgba(68,136,255,.06) 50%, rgba(68,136,255,.18)); box-shadow: 0 -2px 8px rgba(68,136,255,.25), 0 2px 8px rgba(68,136,255,.25), inset 0 0 28px rgba(68,136,255,.07); }
+    .ls-selector[data-w="1"] { border-top: 2px solid rgba(153,85,255,.95); border-bottom: 2px solid rgba(153,85,255,.95); background: linear-gradient(to bottom, rgba(153,85,255,.18), rgba(153,85,255,.06) 50%, rgba(153,85,255,.18)); box-shadow: 0 -2px 8px rgba(153,85,255,.25), 0 2px 8px rgba(153,85,255,.25), inset 0 0 28px rgba(153,85,255,.07); }
+    .ls-selector[data-w="2"] { border-top: 2px solid rgba(255,215,0,.95); border-bottom: 2px solid rgba(255,215,0,.95); background: linear-gradient(to bottom, rgba(255,215,0,.18), rgba(255,215,0,.06) 50%, rgba(255,215,0,.18)); box-shadow: 0 -2px 8px rgba(255,215,0,.25), 0 2px 8px rgba(255,215,0,.25), inset 0 0 28px rgba(255,215,0,.07); }
     .ls-result-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.1em; letter-spacing: 2px; opacity: 0; text-align: center; max-width: 100%; word-break: break-word; line-height: 1.3; flex-shrink: 0; }
     .ls-result-label[data-w="0"] { color: #4488ff; }
     .ls-result-label[data-w="1"] { color: #bb77ff; }
@@ -865,7 +899,18 @@
 const AVATARS = ['🧑‍🚀','👩‍🎤','🧙','🦸','🐯','🤖','👾','🎩','🦊','🐸','🦁','🐉'];
 const AV_BG   = ['#1e3d8f','#8f1e3d','#1e8f3d','#8f8f1e','#8f4a1e','#1e4a8f','#5a1e8f','#8f6a1e','#6a3a1e','#1e6a3a','#8f2a1e','#2a1e8f'];
 const P_COLORS = ['#4488ff','#ff4444','#44ee88','#ffcc00'];
-const WHEEL_COLORS = ['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#f39c12','#00bcd4','#ff5722'];
+const WHEEL_COLORS = [
+  'linear-gradient(180deg,#b03a2e,#7b241c)',
+  'linear-gradient(180deg,#1a6b9a,#0e4069)',
+  'linear-gradient(180deg,#1e8449,#145a32)',
+  'linear-gradient(180deg,#7d3c98,#512e76)',
+  'linear-gradient(180deg,#c0651a,#8e4a14)',
+  'linear-gradient(180deg,#148f77,#0a6050)',
+  'linear-gradient(180deg,#a93226,#7b1d16)',
+  'linear-gradient(180deg,#b7950b,#7d680a)',
+  'linear-gradient(180deg,#1f618d,#154360)',
+  'linear-gradient(180deg,#6e2f8a,#4a235a)',
+];
 const PTS = 100;
 
 // ══════════════════════════════════════════════════════════
@@ -1960,7 +2005,16 @@ function buildLSGameBoard() {
 
     const lbl = document.createElement('div'); lbl.className='ls-wheel-label';
     lbl.textContent = wh.label || `WHEEL ${wi+1}`;
+    lbl.dataset.w = wi;
     lbl.id = `ls-wheel-lbl-${wi}`;
+
+    // ── Slot-machine housing (metallic frame) ──────────────────
+    const housing = document.createElement('div'); housing.className='ls-slot-housing'; housing.dataset.w=wi;
+    // Corner bolts
+    ['tl','tr','bl','br'].forEach(p=>{ const b=document.createElement('div'); b.className=`ls-bolt ls-bolt-${p}`; housing.appendChild(b); });
+    // Payline pointer arrows (outside the glass, on the frame)
+    const ptrL = document.createElement('div'); ptrL.className='ls-sel-ptr ls-sel-ptr-left'; housing.appendChild(ptrL);
+    const ptrR = document.createElement('div'); ptrR.className='ls-sel-ptr ls-sel-ptr-right'; housing.appendChild(ptrR);
 
     const vp = document.createElement('div'); vp.className='ls-wheel-viewport'; vp.dataset.w=wi;
     vp.id = `ls-wheel-vp-${wi}`;
@@ -1971,7 +2025,7 @@ function buildLSGameBoard() {
       wh.options.forEach((opt,oi)=>{
         const tile = document.createElement('div'); tile.className='ls-tile';
         tile.style.background = WHEEL_COLORS[(oi+copy)%WHEEL_COLORS.length];
-        tile.textContent = opt;
+        const sp = document.createElement('span'); sp.textContent = opt; tile.appendChild(sp);
         reel.appendChild(tile);
       });
     }
@@ -1979,13 +2033,16 @@ function buildLSGameBoard() {
     // Fade overlays
     const fadeTop = document.createElement('div'); fadeTop.className='ls-fade-top';
     const fadeBot = document.createElement('div'); fadeBot.className='ls-fade-bot';
-    // Selector bar
+    // Payline selector window
     const sel = document.createElement('div'); sel.className='ls-selector'; sel.dataset.w=wi;
+    // Glass sheen
+    const sheen = document.createElement('div'); sheen.className='ls-glass-sheen';
 
     vp.appendChild(reel);
     vp.appendChild(fadeTop);
     vp.appendChild(fadeBot);
     vp.appendChild(sel);
+    vp.appendChild(sheen);
 
     // Pending overlay for dynamic (bible mode) wheels 2 & 3
     if (wh.dynamic) {
@@ -1994,12 +2051,14 @@ function buildLSGameBoard() {
       vp.appendChild(pending);
     }
 
+    housing.appendChild(vp);
+
     // Result label below wheel
     const resultLbl = document.createElement('div'); resultLbl.className='ls-result-label'; resultLbl.dataset.w=wi;
     resultLbl.id = `ls-result-lbl-${wi}`;
 
     col.appendChild(lbl);
-    col.appendChild(vp);
+    col.appendChild(housing);
     col.appendChild(resultLbl);
     sec.appendChild(col);
 
@@ -2152,7 +2211,7 @@ function rebuildWheelReel(idx, options) {
     options.forEach((opt, oi) => {
       const tile = document.createElement('div'); tile.className = 'ls-tile';
       tile.style.background = WHEEL_COLORS[(oi+copy) % WHEEL_COLORS.length];
-      tile.textContent = opt;
+      const sp = document.createElement('span'); sp.textContent = opt; tile.appendChild(sp);
       reel.appendChild(tile);
     });
   }
